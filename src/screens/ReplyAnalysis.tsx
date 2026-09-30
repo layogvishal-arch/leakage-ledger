@@ -80,7 +80,6 @@ export function ReplyAnalysis() {
   return (
     <div>
       <PageHeader
-        eyebrow="Screen 4"
         title="LLM Reply Analysis"
         description="A reply comes in. The model reads it, decides whether the person is confirmed, and only the label — not the message — ever leaves this screen."
       />

@@ -45,7 +45,6 @@ export function Waterfall() {
   return (
     <div>
       <PageHeader
-        eyebrow="Screen 2"
         title="Waterfall View"
         description="One contact, followed through every vendor it touched. Cost only accrues where a vendor actually bills — a miss is free, a resolved credit isn't."
         action={<Button variant="secondary" onClick={replay}>↻ Replay</Button>}

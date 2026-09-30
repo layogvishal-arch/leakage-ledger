@@ -30,7 +30,6 @@ export function UnitEconomics() {
   return (
     <div>
       <PageHeader
-        eyebrow="Screen 6"
         title="Unit Economics"
         description="What's on the invoice vs. what a usable contact actually costs, per vendor — plus what it's been quietly costing Meridian since day one."
       />

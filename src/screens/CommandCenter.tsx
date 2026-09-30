@@ -137,7 +137,6 @@ export function CommandCenter() {
   return (
     <div>
       <PageHeader
-        eyebrow="Screen 5 · Hero"
         title="Leakage Command Center"
         description="What Meridian is spending on enrichment, how much of it never turned into a usable contact, and how much is still recoverable — filtered live."
         action={<FilterBar filters={filters} onChange={setFilters} />}

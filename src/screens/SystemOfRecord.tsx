@@ -59,7 +59,6 @@ export function SystemOfRecord() {
   return (
     <div>
       <PageHeader
-        eyebrow="Screen 3"
         title="System of Record"
         description="Every field that makes up a record, and how one record's status resolves signal by signal."
       />

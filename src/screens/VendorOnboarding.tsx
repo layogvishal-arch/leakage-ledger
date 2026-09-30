@@ -54,7 +54,6 @@ export function VendorOnboarding() {
   return (
     <div>
       <PageHeader
-        eyebrow="Screen 1"
         title="Vendor Onboarding"
         description="Adding a vendor is a repeatable configuration step — not a one-off integration. Every vendor below went through the same four-step flow."
       />

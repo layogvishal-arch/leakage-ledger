@@ -92,7 +92,6 @@ export function ClaimExport() {
   return (
     <div>
       <PageHeader
-        eyebrow="Screen 8"
         title="Claim Export"
         description="Turn claim-eligible records into evidence a vendor can act on — export it, or draft the email for a human to send."
       />

@@ -25,12 +25,12 @@ export function Badge({ children, tone = 'neutral' }: { children: ReactNode; ton
   return <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${tones[tone]}`}>{children}</span>
 }
 
-export function PageHeader({ eyebrow, title, description, action }: { eyebrow: string; title: string; description?: string; action?: ReactNode }) {
+export function PageHeader({ eyebrow, title, description, action }: { eyebrow?: string; title: string; description?: string; action?: ReactNode }) {
   return (
     <div className="mb-6 flex items-start justify-between gap-4">
       <div>
-        <div className="text-xs font-medium uppercase tracking-widest text-[var(--color-text-faint)]">{eyebrow}</div>
-        <h1 className="font-serif-num mt-1 text-2xl text-[var(--color-text)]">{title}</h1>
+        {eyebrow ? <div className="text-xs font-medium uppercase tracking-widest text-[var(--color-text-faint)]">{eyebrow}</div> : null}
+        <h1 className={`font-serif-num text-2xl text-[var(--color-text)] ${eyebrow ? 'mt-1' : ''}`}>{title}</h1>
         {description ? <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--color-text-muted)]">{description}</p> : null}
       </div>
       {action}

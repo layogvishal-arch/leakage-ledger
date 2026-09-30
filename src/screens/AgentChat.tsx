@@ -51,7 +51,6 @@ export function AgentChat() {
   return (
     <div>
       <PageHeader
-        eyebrow="Screen 7"
         title="Agent Chat"
         description="Ask a quantified question, get an answer computed live from the same 100k-record dataset every other screen reads from."
       />
