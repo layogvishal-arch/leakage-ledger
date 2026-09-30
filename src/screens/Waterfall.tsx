@@ -12,10 +12,10 @@ interface Step {
 }
 
 const STEPS: Step[] = [
-  { id: 'apollo', actor: 'Apollo', title: 'Attempt enrichment', detail: 'Queried on name + company domain.', cost: 0.1, result: 'fail' },
-  { id: 'apollo-result', actor: 'Apollo', title: 'Nothing found', detail: 'No matching contact in Apollo’s index. Credit still charged.', cost: 0, result: 'fail' },
-  { id: 'contactout', actor: 'ContactOut', title: 'Falls to ContactOut', detail: 'Waterfall retries the next vendor in the chain.', cost: 0.1, result: 'success' },
-  { id: 'contactout-result', actor: 'ContactOut', title: 'Email returned', detail: 'j.alvarez@brightpath.io, presumed right person.', cost: 0, result: 'success' },
+  { id: 'apollo', actor: 'Apollo', title: 'Attempt enrichment', detail: 'Queried on name + company domain.', cost: 0, result: 'neutral' },
+  { id: 'apollo-result', actor: 'Apollo', title: 'Nothing found', detail: 'No matching contact in Apollo’s index. Not billed — a vendor that finds nothing doesn’t charge for the attempt.', cost: 0, result: 'fail' },
+  { id: 'contactout', actor: 'ContactOut', title: 'Falls to ContactOut', detail: 'Waterfall retries the next vendor in the chain.', cost: 0, result: 'neutral' },
+  { id: 'contactout-result', actor: 'ContactOut', title: 'Email returned', detail: 'j.alvarez@brightpath.io, presumed right person. Billed — this credit resolved.', cost: 0.1, result: 'success' },
   { id: 'zerobounce', actor: 'ZeroBounce', title: 'Validate the email', detail: 'Deliverability check against the returned address.', cost: 0.008, result: 'success' },
   { id: 'zerobounce-result', actor: 'ZeroBounce', title: 'Valid, deliverable', detail: 'Mailbox exists and accepts mail.', cost: 0, result: 'success' },
   { id: 'outreach', actor: 'Meridian Sales', title: 'Outreach sent', detail: 'Contact enters the outbound sequence.', cost: 0, result: 'neutral' },
@@ -47,7 +47,7 @@ export function Waterfall() {
       <PageHeader
         eyebrow="Screen 2"
         title="Waterfall View"
-        description="One contact, followed through every vendor it touched. Cost accrues at every attempt — including the one that failed."
+        description="One contact, followed through every vendor it touched. Cost only accrues where a vendor actually bills — a miss is free, a resolved credit isn't."
         action={<Button variant="secondary" onClick={replay}>↻ Replay</Button>}
       />
 
@@ -96,8 +96,8 @@ export function Waterfall() {
 
         {visible >= STEPS.length && (
           <div className="fade-slide-in mt-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] px-4 py-3 text-sm text-[var(--color-text-muted)]">
-            Total for this contact: <span className="font-serif-num text-[var(--color-text)]">{fmtUsdCents(costSoFar)}</span> across 2 enrichment
-            attempts (1 failed, 1 succeeded) and 1 validation — for one usable, presumed-right contact.
+            Total for this contact: <span className="font-serif-num text-[var(--color-text)]">{fmtUsdCents(costSoFar)}</span> — the failed Apollo
+            attempt cost nothing, ContactOut's successful one billed {fmtUsdCents(0.1)}, and ZeroBounce's check billed {fmtUsdCents(0.008)}.
           </div>
         )}
       </Panel>
