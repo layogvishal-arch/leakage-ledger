@@ -1,5 +1,5 @@
 import { generateSeedData, TOTAL_RECORDS } from '../src/lib/seedData'
-import { byDepartment, byVendor, funnel, headline, pendingValidation, sumCost } from '../src/lib/aggregates'
+import { byDepartment, byVendor, funnel, headline, pendingValidation, sumCost, validationSpend } from '../src/lib/aggregates'
 
 const EPS = 0.02 // cents-level float tolerance
 let failures = 0
@@ -50,11 +50,14 @@ assertClose('sum(dept recoverable) == headline recoverable', depts.reduce((s, d)
 // The loss stages (invalid/bounced, wrong_person) are independent,
 // single-cause segments of the baseline, not cumulative survivors, so what
 // must hold is reconciliation — baseline == losses + final + pending —
-// not a monotonic decrease across all four rows. ---
+// not a monotonic decrease across all four rows. Every stage's dollars are
+// enrichment cost ONLY (count x $0.10) — ZeroBounce's validation fee is a
+// separate vendor line, reported via validationSpend(), not folded in. ---
 const [consumedStage, invalidBouncedStage, wrongPersonStage, rightPersonStage] = f
 assertTrue('funnel has exactly 4 stages', f.length === 4)
 assertTrue('funnel first stage count == billed (non-not_found) records', consumedStage.count === records.filter((r) => r.bucket !== 'not_found').length)
-assertClose('funnel first stage $ == headline totalSpend', consumedStage.dollars, h.totalSpend)
+assertClose('funnel first stage $ == credits consumed x $0.10 (enrichment only)', consumedStage.dollars, consumedStage.count * 0.1)
+assertClose('funnel first stage $ + validation spend == headline totalSpend', consumedStage.dollars + validationSpend(records), h.totalSpend)
 assertTrue('funnel last stage count == headline verifiedCount', rightPersonStage.count === h.verifiedCount)
 assertTrue(
   'invalid/bounced stage count == invalid + bounced buckets',

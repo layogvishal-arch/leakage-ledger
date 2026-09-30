@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useData } from '../state/DataContext'
-import { applyFilters, byDepartment, byVendor, funnel, headline, pendingValidation, type Filters } from '../lib/aggregates'
+import { applyFilters, byDepartment, byVendor, funnel, headline, pendingValidation, validationSpend, type Filters } from '../lib/aggregates'
 import { fmtCompact, fmtDate, fmtNumber, fmtUsd, fmtUsdCents } from '../lib/format'
 import { PageHeader, Panel, SyntheticDataFooter } from '../components/ui'
 import { StatCard } from '../components/StatCard'
@@ -22,7 +22,15 @@ function ChartTooltip({ active, payload, label }: any) {
   )
 }
 
-function FunnelViz({ stages, pending }: { stages: ReturnType<typeof funnel>; pending: ReturnType<typeof pendingValidation> }) {
+function FunnelViz({
+  stages,
+  pending,
+  validationTotal,
+}: {
+  stages: ReturnType<typeof funnel>
+  pending: ReturnType<typeof pendingValidation>
+  validationTotal: number
+}) {
   const max = stages[0]?.count || 1
   const barColor = (kind: (typeof stages)[number]['kind']) =>
     kind === 'final' ? 'var(--color-recoverable)' : kind === 'loss' ? 'var(--color-leaked)' : 'var(--color-text-faint)'
@@ -47,9 +55,14 @@ function FunnelViz({ stages, pending }: { stages: ReturnType<typeof funnel>; pen
           </div>
         )
       })}
-      {pending.count > 0 && (
-        <div className="border-t border-[var(--color-border-soft)] pt-3 text-xs text-[var(--color-text-faint)]">
-          +{fmtNumber(pending.count)} more ({fmtUsd(pending.dollars)}) still awaiting ZeroBounce validation — not yet a pass or a loss
+      {(pending.count > 0 || validationTotal > 0) && (
+        <div className="space-y-1 border-t border-[var(--color-border-soft)] pt-3 text-xs text-[var(--color-text-faint)]">
+          {pending.count > 0 && (
+            <div>+{fmtNumber(pending.count)} more ({fmtUsd(pending.dollars)}) still awaiting ZeroBounce validation — not yet a pass or a loss</div>
+          )}
+          {validationTotal > 0 && (
+            <div>Bars above are enrichment cost only (credits × $0.10). ZeroBounce validation is billed separately: {fmtUsd(validationTotal)} total.</div>
+          )}
         </div>
       )}
     </div>
@@ -103,6 +116,7 @@ export function CommandCenter() {
   const h = useMemo(() => headline(filtered), [filtered])
   const stages = useMemo(() => funnel(filtered), [filtered])
   const pending = useMemo(() => pendingValidation(filtered), [filtered])
+  const validationTotal = useMemo(() => validationSpend(filtered), [filtered])
   const vendors = useMemo(() => byVendor(filtered), [filtered])
   const depts = useMemo(() => byDepartment(filtered), [filtered])
   const trendData = useMemo(() => {
@@ -154,7 +168,7 @@ export function CommandCenter() {
 
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[1.1fr_1fr]">
         <Panel title="Funnel — credits consumed to verified contact">
-          <FunnelViz stages={stages} pending={pending} />
+          <FunnelViz stages={stages} pending={pending} validationTotal={validationTotal} />
         </Panel>
         <Panel title="Trend over time">
           <ResponsiveContainer width="100%" height={260}>

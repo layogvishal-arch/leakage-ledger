@@ -43,6 +43,8 @@ A `not_found` search never consumes a credit — a vendor that returns no email 
 
 The dataset is generated deterministically (seeded PRNG) from a small set of target bucket sizes in [`src/lib/seedData.ts`](src/lib/seedData.ts) — that's the *only* place numbers are hand-picked. Every dollar figure on every screen — funnel drops, vendor/department breakdowns, trend lines, agent chat answers, CSV exports — is computed from the record array at read time in [`src/lib/aggregates.ts`](src/lib/aggregates.ts).
 
+The Command Center funnel's dollar figures are enrichment cost only (credits × $0.10) — ZeroBounce's per-check fee is a separate vendor line on a separate unit (checks, not credits), so it's reported on its own beneath the funnel rather than folded into any bar. A bar's count and dollars always divide out to exactly $0.10.
+
 Landed numbers (deterministic given the seed):
 
 - Total spend: **$10,000** (95,200 credits billed at $0.10 + 60,000 ZeroBounce validations × $0.008 — the other 4,800 of the 100,000 searches never consumed a credit at all, since they're `not_found`)

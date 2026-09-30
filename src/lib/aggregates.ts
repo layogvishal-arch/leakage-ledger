@@ -59,12 +59,18 @@ export interface FunnelStage {
 // blended "didn't become valid" number. Records still awaiting ZeroBounce
 // (see pendingValidation below) are neither a pass nor a loss yet, so they
 // aren't part of this sequence.
+//
+// Dollars here are enrichment cost ONLY (count × $0.10), not sumCost — a
+// credit only ever costs the contracted price. ZeroBounce's per-check fee is
+// a separate vendor billing on a separate unit (checks, not credits), so
+// baking it into these figures would make "95,200 credits" not equal
+// "95,200 × $0.10". It's surfaced on its own via validationSpend() instead.
 export function funnel(records: EnrichmentRecord[]): FunnelStage[] {
   const consumed = records.filter((r) => r.credits > 0)
   const invalidOrBounced = records.filter((r) => r.bucket === 'invalid' || r.bucket === 'bounced')
   const wrongPerson = records.filter((r) => r.bucket === 'wrong_person')
   const rightPerson = goodRecords(records)
-  const dollarsFor = (set: EnrichmentRecord[]) => sumCost(set)
+  const dollarsFor = (set: EnrichmentRecord[]) => enrichmentSpend(set)
   return [
     { key: 'consumed', label: 'Credits consumed', count: consumed.length, dollars: dollarsFor(consumed), kind: 'baseline' },
     {
@@ -90,7 +96,7 @@ export function funnel(records: EnrichmentRecord[]): FunnelStage[] {
  * funnel above so the two loss stages stay clean, single-cause numbers. */
 export function pendingValidation(records: EnrichmentRecord[]): { count: number; dollars: number } {
   const pending = records.filter((r) => r.bucket === 'unvalidated_residual')
-  return { count: pending.length, dollars: sumCost(pending) }
+  return { count: pending.length, dollars: enrichmentSpend(pending) }
 }
 
 export interface GroupBreakdown {
