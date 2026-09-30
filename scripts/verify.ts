@@ -1,5 +1,5 @@
 import { generateSeedData, TOTAL_RECORDS } from '../src/lib/seedData'
-import { byDepartment, byVendor, funnel, headline, sumCost } from '../src/lib/aggregates'
+import { byDepartment, byVendor, funnel, headline, pendingValidation, sumCost } from '../src/lib/aggregates'
 
 const EPS = 0.02 // cents-level float tolerance
 let failures = 0
@@ -28,6 +28,7 @@ const h = headline(records)
 const vendors = byVendor(records)
 const depts = byDepartment(records)
 const f = funnel(records)
+const pending = pendingValidation(records)
 
 console.log(`\nGenerated ${records.length} records (target ${TOTAL_RECORDS})\n`)
 
@@ -45,12 +46,32 @@ assertClose('sum(dept leaked) == headline leaked', depts.reduce((s, d) => s + d.
 assertClose('sum(dept recoverable) == headline recoverable', depts.reduce((s, d) => s + d.recoverable, 0), h.recoverable)
 
 // --- Funnel: a credit-to-cost funnel, so it starts at credits consumed
-// (not_found searches never consumed one, so they're excluded entirely) ---
-assertTrue('funnel first stage count == billed (non-not_found) records', f[0].count === records.filter((r) => r.bucket !== 'not_found').length)
-assertClose('funnel first stage $ == headline totalSpend', f[0].dollars, h.totalSpend)
-assertTrue('funnel is monotonically non-increasing (count)', f.every((stage, i) => i === 0 || stage.count <= f[i - 1].count))
-assertTrue('funnel is monotonically non-increasing ($)', f.every((stage, i) => i === 0 || stage.dollars <= f[i - 1].dollars))
-assertTrue('funnel last stage count == headline verifiedCount', f[f.length - 1].count === h.verifiedCount)
+// (not_found searches never consumed one, so they're excluded entirely).
+// The loss stages (invalid/bounced, wrong_person) are independent,
+// single-cause segments of the baseline, not cumulative survivors, so what
+// must hold is reconciliation — baseline == losses + final + pending —
+// not a monotonic decrease across all four rows. ---
+const [consumedStage, invalidBouncedStage, wrongPersonStage, rightPersonStage] = f
+assertTrue('funnel has exactly 4 stages', f.length === 4)
+assertTrue('funnel first stage count == billed (non-not_found) records', consumedStage.count === records.filter((r) => r.bucket !== 'not_found').length)
+assertClose('funnel first stage $ == headline totalSpend', consumedStage.dollars, h.totalSpend)
+assertTrue('funnel last stage count == headline verifiedCount', rightPersonStage.count === h.verifiedCount)
+assertTrue(
+  'invalid/bounced stage count == invalid + bounced buckets',
+  invalidBouncedStage.count === records.filter((r) => r.bucket === 'invalid' || r.bucket === 'bounced').length,
+)
+assertTrue('wrong_person stage count == wrong_person bucket', wrongPersonStage.count === records.filter((r) => r.bucket === 'wrong_person').length)
+assertClose(
+  'reconciliation: consumed == invalid/bounced + wrong_person + verified + pending (count)',
+  invalidBouncedStage.count + wrongPersonStage.count + rightPersonStage.count + pending.count,
+  consumedStage.count,
+  0,
+)
+assertClose(
+  'reconciliation: consumed == invalid/bounced + wrong_person + verified + pending ($)',
+  invalidBouncedStage.dollars + wrongPersonStage.dollars + rightPersonStage.dollars + pending.dollars,
+  consumedStage.dollars,
+)
 
 // --- Headline reconciles internally ---
 assertClose('leaked + (totalSpend - leaked) == totalSpend', h.leaked + (h.totalSpend - h.leaked), h.totalSpend)

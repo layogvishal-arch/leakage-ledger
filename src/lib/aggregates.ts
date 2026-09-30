@@ -47,23 +47,50 @@ export interface FunnelStage {
   label: string
   count: number
   dollars: number
+  /** baseline = the billed starting population; loss = a stop-point where
+   * the process halts (no outreach) but the credit was already billed, so
+   * it's evidence for a vendor claim; final = the surviving good outcome. */
+  kind: 'baseline' | 'loss' | 'final'
 }
 
-// A credit-to-cost funnel: every stage is a population that actually
-// consumed a credit (not_found searches never do, so they're not part of
-// this funnel at all — see isVerifiedGood / the not_found billing rule).
-// Dollars appear from the first stage onward since a credit, by definition,
-// is a billed unit.
+// A credit-to-cost funnel that follows the real operational sequence: a
+// credit is billed once a contact is enriched, and if ZeroBounce or a reply
+// stops the process, that's a distinct, individually-costed loss — not a
+// blended "didn't become valid" number. Records still awaiting ZeroBounce
+// (see pendingValidation below) are neither a pass nor a loss yet, so they
+// aren't part of this sequence.
 export function funnel(records: EnrichmentRecord[]): FunnelStage[] {
   const consumed = records.filter((r) => r.credits > 0)
-  const valid = records.filter((r) => r.validity === 'valid')
+  const invalidOrBounced = records.filter((r) => r.bucket === 'invalid' || r.bucket === 'bounced')
+  const wrongPerson = records.filter((r) => r.bucket === 'wrong_person')
   const rightPerson = goodRecords(records)
   const dollarsFor = (set: EnrichmentRecord[]) => sumCost(set)
   return [
-    { key: 'consumed', label: 'Credits consumed', count: consumed.length, dollars: dollarsFor(consumed) },
-    { key: 'valid', label: 'Valid contact', count: valid.length, dollars: dollarsFor(valid) },
-    { key: 'right_person', label: 'Verified right person', count: rightPerson.length, dollars: dollarsFor(rightPerson) },
+    { key: 'consumed', label: 'Credits consumed', count: consumed.length, dollars: dollarsFor(consumed), kind: 'baseline' },
+    {
+      key: 'invalid_bounced',
+      label: 'Invalid / bounced — stops here, billed to vendor',
+      count: invalidOrBounced.length,
+      dollars: dollarsFor(invalidOrBounced),
+      kind: 'loss',
+    },
+    {
+      key: 'wrong_person',
+      label: 'Wrong person — stops here, billed to vendor',
+      count: wrongPerson.length,
+      dollars: dollarsFor(wrongPerson),
+      kind: 'loss',
+    },
+    { key: 'right_person', label: 'Verified right person', count: rightPerson.length, dollars: dollarsFor(rightPerson), kind: 'final' },
   ]
+}
+
+/** Enriched records still awaiting a ZeroBounce check — billed, but neither
+ * a confirmed pass nor a confirmed loss yet. Reported separately from the
+ * funnel above so the two loss stages stay clean, single-cause numbers. */
+export function pendingValidation(records: EnrichmentRecord[]): { count: number; dollars: number } {
+  const pending = records.filter((r) => r.bucket === 'unvalidated_residual')
+  return { count: pending.length, dollars: sumCost(pending) }
 }
 
 export interface GroupBreakdown {

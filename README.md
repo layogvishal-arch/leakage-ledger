@@ -59,7 +59,7 @@ npm run verify   # asserts every rollup reconciles against the record-level data
 npm run build    # production build
 ```
 
-`npm run verify` is the acceptance gate: it regenerates the dataset and asserts that vendor and department breakdowns sum to the headline totals, the funnel is monotonic and sums to total spend, claim eligibility follows final state only (no double-counting), `not_found` records are always billed $0, and the headline numbers land where they should ($0.20 effective cost — exactly 2x contracted — and $2,900 recoverable).
+`npm run verify` is the acceptance gate: it regenerates the dataset and asserts that vendor and department breakdowns sum to the headline totals, the funnel's loss stages plus its final stage plus the still-pending population reconcile back to its billed starting point, claim eligibility follows final state only (no double-counting), `not_found` records are always billed $0, and the headline numbers land where they should ($0.20 effective cost — exactly 2x contracted — and $2,900 recoverable).
 
 ## Stack
 
