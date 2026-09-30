@@ -5,17 +5,22 @@ import { fmtDate, fmtUsdCents } from '../lib/format'
 
 const STEPS = ['Connect vendor', 'Set price per credit', 'Define "bad"', 'Set claim SLA']
 
-const BAD_SIGNAL_OPTIONS = [
+const VENDOR_CATEGORIES = ['Enrichment', 'Validation', 'Firmographic', 'Intent data'] as const
+
+const DEFAULT_BAD_SIGNALS = [
   { id: 'bounced', label: 'Bounced' },
   { id: 'invalid', label: 'Invalid' },
   { id: 'wrong_person', label: 'Wrong person' },
-] as const
+]
 
 export function VendorOnboarding() {
   const [step, setStep] = useState(0)
   const [name, setName] = useState('Lusha')
+  const [category, setCategory] = useState<(typeof VENDOR_CATEGORIES)[number]>('Enrichment')
   const [price, setPrice] = useState('0.12')
+  const [signalOptions, setSignalOptions] = useState(DEFAULT_BAD_SIGNALS)
   const [badSignals, setBadSignals] = useState<Set<string>>(new Set(['bounced', 'invalid']))
+  const [newSignal, setNewSignal] = useState('')
   const [sla, setSla] = useState('30')
   const [justOnboarded, setJustOnboarded] = useState(false)
 
@@ -26,6 +31,19 @@ export function VendorOnboarding() {
       else next.add(id)
       return next
     })
+  }
+
+  function addCustomSignal() {
+    const label = newSignal.trim()
+    if (!label) return
+    const id = label.toLowerCase().replace(/\s+/g, '_')
+    if (signalOptions.some((opt) => opt.id === id)) {
+      setNewSignal('')
+      return
+    }
+    setSignalOptions((prev) => [...prev, { id, label }])
+    setBadSignals((prev) => new Set(prev).add(id))
+    setNewSignal('')
   }
 
   function finish() {
@@ -68,6 +86,20 @@ export function VendorOnboarding() {
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Vendor name"
               />
+              <div>
+                <label className="mb-1 block text-xs text-[var(--color-text-faint)]">Category</label>
+                <select
+                  className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-2 text-sm text-[var(--color-text)] outline-none focus:border-[var(--color-text-faint)]"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value as (typeof VENDOR_CATEGORIES)[number])}
+                >
+                  {VENDOR_CATEGORIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div className="flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-2 text-sm text-[var(--color-recoverable)]">
                 <span className="h-2 w-2 rounded-full bg-[var(--color-recoverable)]" /> API key verified
               </div>
@@ -95,7 +127,7 @@ export function VendorOnboarding() {
               <div className="text-sm font-medium text-[var(--color-text)]">Define what "bad" means for this vendor</div>
               <p className="text-sm text-[var(--color-text-muted)]">Toggle which signals should trigger a claim against this vendor.</p>
               <div className="flex flex-wrap gap-2">
-                {BAD_SIGNAL_OPTIONS.map((opt) => (
+                {signalOptions.map((opt) => (
                   <button
                     key={opt.id}
                     onClick={() => toggleSignal(opt.id)}
@@ -108,6 +140,23 @@ export function VendorOnboarding() {
                     {opt.label}
                   </button>
                 ))}
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  className="flex-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-2 text-sm outline-none focus:border-[var(--color-text-faint)]"
+                  value={newSignal}
+                  onChange={(e) => setNewSignal(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      addCustomSignal()
+                    }
+                  }}
+                  placeholder="Define another bad signal…"
+                />
+                <Button variant="secondary" onClick={addCustomSignal} disabled={!newSignal.trim()}>
+                  Add signal
+                </Button>
               </div>
             </div>
           )}
@@ -140,8 +189,8 @@ export function VendorOnboarding() {
 
           {justOnboarded && (
             <div className="fade-slide-in mt-4 rounded-lg border border-[var(--color-recoverable)]/30 bg-[var(--color-recoverable-soft)] px-4 py-3 text-sm text-[var(--color-recoverable)]">
-              {name} onboarded at {fmtUsdCents(Number(price) || 0)}/credit, {sla}-day claim SLA. It now behaves exactly like the vendors on the
-              right.
+              {name} ({category}) onboarded at {fmtUsdCents(Number(price) || 0)}/credit, {sla}-day claim SLA, {badSignals.size} bad signal
+              {badSignals.size === 1 ? '' : 's'} defined. It now behaves exactly like the vendors on the right.
             </div>
           )}
         </Panel>
