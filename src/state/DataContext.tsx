@@ -22,12 +22,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
     record.reply_analyzed_at = AS_OF_DATE.toISOString().slice(0, 10)
     if (match === 'wrong_person') {
       record.claim_eligible = true
-      record.claim_confidence = 'medium'
       record.claim_status = 'none'
       record.bucket = 'wrong_person'
     } else {
       record.claim_eligible = false
-      record.claim_confidence = null
       record.bucket = 'right_person'
     }
     setVersion((v) => v + 1)

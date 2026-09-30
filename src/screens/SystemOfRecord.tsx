@@ -19,7 +19,6 @@ const SCHEMA_FIELDS: Array<{ field: string; type: string; note?: string }> = [
   { field: 'validated_at', type: 'date | null' },
   { field: 'reply_analyzed_at', type: 'date | null' },
   { field: 'claim_eligible', type: 'boolean' },
-  { field: 'claim_confidence', type: 'high | medium | null' },
   { field: 'claim_status', type: 'none | submitted | acknowledged | credited | rejected' },
 ]
 

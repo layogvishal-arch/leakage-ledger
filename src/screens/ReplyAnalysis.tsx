@@ -11,33 +11,39 @@ interface Scenario {
   reply: string
   verdict: {
     personMatch: 'right_person' | 'wrong_person' | 'ambiguous'
-    sentiment: 'positive' | 'negative' | 'neutral'
-    confidence: number
+    rule: string
     reason: string
   }
 }
 
+// Three-way classification, deliberately not a confidence score: a reply
+// either explicitly confirms the person, explicitly denies it, or does
+// neither — in which case it's ambiguous and nothing gets written back.
 const SCENARIOS: Scenario[] = [
   {
     id: 'right',
     label: 'Right person',
     from: 'J. Alvarez',
     reply: '"Yep, this is me — happy to grab 15 minutes Thursday if that works."',
-    verdict: { personMatch: 'right_person', sentiment: 'positive', confidence: 0.96, reason: 'Confirms identity and engages with the ask.' },
+    verdict: { personMatch: 'right_person', rule: 'Explicitly confirms identity', reason: 'Reply confirms this is the right person and engages with the ask.' },
   },
   {
     id: 'wrong',
     label: 'Wrong person',
     from: 'Unknown recipient',
     reply: '"I think you have the wrong person, I left that company last year."',
-    verdict: { personMatch: 'wrong_person', sentiment: 'neutral', confidence: 0.93, reason: 'Explicit denial plus a stated employer change.' },
+    verdict: { personMatch: 'wrong_person', rule: 'Explicitly denies identity', reason: 'Reply states directly that this is the wrong person, with a reason given.' },
   },
   {
     id: 'ambiguous',
     label: 'Ambiguous',
     from: 'Auto-reply',
     reply: '"Thanks for reaching out, I\'ll take a look and get back to you when I can."',
-    verdict: { personMatch: 'ambiguous', sentiment: 'neutral', confidence: 0.41, reason: 'Generic acknowledgment — no identity signal either way.' },
+    verdict: {
+      personMatch: 'ambiguous',
+      rule: "Doesn't address identity either way",
+      reason: 'Reply neither confirms nor denies who they are — stays presumed right, flagged for a human to look at.',
+    },
   },
 ]
 
@@ -113,12 +119,8 @@ export function ReplyAnalysis() {
               </Badge>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[var(--color-text-faint)]">sentiment</span>
-              <span className="text-[var(--color-text)]">{scenario.verdict.sentiment}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[var(--color-text-faint)]">confidence</span>
-              <span className="font-serif-num text-[var(--color-text)]">{(scenario.verdict.confidence * 100).toFixed(0)}%</span>
+              <span className="text-[var(--color-text-faint)]">rule applied</span>
+              <span className="text-right text-[var(--color-text)]">{scenario.verdict.rule}</span>
             </div>
             <div>
               <span className="text-[var(--color-text-faint)]">reason</span>

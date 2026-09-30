@@ -3,7 +3,7 @@ import { useData } from '../state/DataContext'
 import { ENRICHMENT_VENDORS } from '../config/vendors.config'
 import { AS_OF_DATE } from '../lib/seedData'
 import { fmtDate, fmtUsd } from '../lib/format'
-import { PageHeader, Panel, ConfidenceTag, Button, SyntheticDataFooter } from '../components/ui'
+import { PageHeader, Panel, Button, SyntheticDataFooter } from '../components/ui'
 import type { EnrichmentRecord } from '../lib/schema'
 
 function monthOptions(): { key: string; label: string }[] {
@@ -26,11 +26,11 @@ function evidenceLabel(r: EnrichmentRecord): string {
 }
 
 function toCsv(records: EnrichmentRecord[]): string {
-  const headers = ['record_id', 'vendor', 'department', 'created_at', 'credits', 'cost_usd', 'final_status', 'evidence', 'confidence']
+  const headers = ['record_id', 'vendor', 'department', 'created_at', 'credits', 'cost_usd', 'final_status', 'evidence']
   const lines = [headers.join(',')]
   for (const r of records) {
     const finalStatus = r.enrichment === 'not_found' ? 'not_found' : `${r.validity}/${r.person_match}`
-    const row = [r.record_id, r.vendor, r.department, r.created_at, r.credits, r.cost_usd.toFixed(2), finalStatus, evidenceLabel(r), r.claim_confidence ?? '']
+    const row = [r.record_id, r.vendor, r.department, r.created_at, r.credits, r.cost_usd.toFixed(2), finalStatus, evidenceLabel(r)]
     lines.push(row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))
   }
   return lines.join('\n')
@@ -170,8 +170,7 @@ export function ClaimExport() {
                 <th className="py-2 pr-4 font-medium">Date</th>
                 <th className="py-2 pr-4 font-medium">Credits</th>
                 <th className="py-2 pr-4 font-medium">Final status</th>
-                <th className="py-2 pr-4 font-medium">Evidence</th>
-                <th className="py-2 pr-0 font-medium">Confidence</th>
+                <th className="py-2 pr-0 font-medium">Evidence</th>
               </tr>
             </thead>
             <tbody>
@@ -183,10 +182,7 @@ export function ClaimExport() {
                   <td className="py-2 pr-4 text-[var(--color-text)]">
                     {r.validity}/{r.person_match}
                   </td>
-                  <td className="py-2 pr-4 text-[var(--color-text-muted)]">{evidenceLabel(r)}</td>
-                  <td className="py-2 pr-0">
-                    <ConfidenceTag confidence={r.claim_confidence} />
-                  </td>
+                  <td className="py-2 pr-0 text-[var(--color-text-muted)]">{evidenceLabel(r)}</td>
                 </tr>
               ))}
             </tbody>

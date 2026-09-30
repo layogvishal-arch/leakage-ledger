@@ -25,11 +25,6 @@ export function Badge({ children, tone = 'neutral' }: { children: ReactNode; ton
   return <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${tones[tone]}`}>{children}</span>
 }
 
-export function ConfidenceTag({ confidence }: { confidence: 'high' | 'medium' | null }) {
-  if (!confidence) return <Badge tone="muted">—</Badge>
-  return <Badge tone={confidence === 'high' ? 'recoverable' : 'leaked'}>{confidence === 'high' ? 'High confidence' : 'Medium confidence'}</Badge>
-}
-
 export function PageHeader({ eyebrow, title, description, action }: { eyebrow: string; title: string; description?: string; action?: ReactNode }) {
   return (
     <div className="mb-6 flex items-start justify-between gap-4">

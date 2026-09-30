@@ -9,7 +9,7 @@ A case study prototype: how an internal RevOps team would track dud contact data
 
 ## The headline
 
-> Contracted cost: **$0.10** per credit. Effective cost per verified, right-person contact: **~$0.21**. Meridian has been paying double — and charging nothing for it.
+> Contracted cost: **$0.10** per credit. Effective cost per verified, right-person contact: **$0.20**. Meridian has been paying double — and charging nothing for it.
 
 Enrichment vendors bill per credit, whether or not the credit resolves to a real, reachable, correct person. "Contracted cost per credit" and "effective cost per verified contact" are treated as the same number almost everywhere. They aren't, and the gap between them is money already spent for nothing.
 
@@ -37,13 +37,17 @@ Everything on every screen is derived from one seed dataset of **100,000 synthet
 
 Only the **final state** counts toward dollar loss — no double-counting across signals. The initial state is always `presumed_right`, never `right_person`: until someone replies, the system doesn't actually know, and the UI says so.
 
+Reply verdicts (Screen 4) are a plain three-way classification, not a confidence score: a reply either explicitly confirms the person, explicitly denies it, or does neither — in which case it's `ambiguous` and nothing gets written back. The same "no fuzzy confidence layer" rule applies to claim evidence (Screen 8): a record is claimable because its final state is `invalid`, `bounced`, or `wrong_person` — that fact alone is the evidence, with no separate high/medium confidence label on top of it.
+
+`not_found` credits are never billed — a vendor that returns no email or phone data doesn't charge for the attempt, so those records carry `cost_usd: 0` and never enter the leaked/recoverable math.
+
 The dataset is generated deterministically (seeded PRNG) from a small set of target bucket sizes in [`src/lib/seedData.ts`](src/lib/seedData.ts) — that's the *only* place numbers are hand-picked. Every dollar figure on every screen — funnel drops, vendor/department breakdowns, trend lines, agent chat answers, CSV exports — is computed from the record array at read time in [`src/lib/aggregates.ts`](src/lib/aggregates.ts).
 
 Landed numbers (deterministic given the seed):
 
-- Total spend: **$10,480** (100,000 enrichment credits × $0.10 + 60,000 ZeroBounce validations × $0.008)
+- Total spend: **$10,000** (95,200 billed enrichment credits × $0.10 + 60,000 ZeroBounce validations × $0.008 — the other 4,800 credits are `not_found` and free)
 - Verified right-person contacts: **50,000** (~half of enrichments, as specified)
-- Effective cost per verified contact: **~$0.21**
+- Effective cost per verified contact: **exactly $0.20** — 2x the $0.10 contracted price
 - Recoverable: **$2,900** (invalid / bounced / wrong-person records, at contract price)
 
 ## Running it
@@ -55,7 +59,7 @@ npm run verify   # asserts every rollup reconciles against the record-level data
 npm run build    # production build
 ```
 
-`npm run verify` is the acceptance gate: it regenerates the dataset and asserts that vendor and department breakdowns sum to the headline totals, the funnel is monotonic and sums to total spend, claim eligibility follows final state only (no double-counting), and the headline numbers land where the brief targets ($0.21 effective cost, $2,900 recoverable).
+`npm run verify` is the acceptance gate: it regenerates the dataset and asserts that vendor and department breakdowns sum to the headline totals, the funnel is monotonic and sums to total spend, claim eligibility follows final state only (no double-counting), `not_found` records are always billed $0, and the headline numbers land where they should ($0.20 effective cost — exactly 2x contracted — and $2,900 recoverable).
 
 ## Stack
 

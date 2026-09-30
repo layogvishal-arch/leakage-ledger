@@ -72,12 +72,20 @@ assertTrue(
 )
 
 // --- Headline lands near the numbers the brief targets ---
-assertClose('effective cost per verified contact lands near $0.21', h.effectiveCost, 0.21, 0.02)
+assertClose('effective cost per verified contact is exactly 2x contracted ($0.20)', h.effectiveCost, 0.2, 0.005)
 assertClose('recoverable total lands near $2,900', h.recoverable, 2900, 50)
 assertTrue('contracted cost is $0.10', h.contractedCost === 0.1)
 
 // --- cost sanity: sumCost over all records matches headline ---
 assertClose('sumCost(all records) == headline totalSpend', sumCost(records), h.totalSpend)
+
+// --- not_found records are never billed: vendors don't charge for a credit
+// that returns no email or phone data ---
+assertTrue(
+  'not_found records always cost $0',
+  records.filter((r) => r.bucket === 'not_found').every((r) => r.cost_usd === 0 && r.validation_cost_usd === 0),
+)
+assertTrue('every non-not_found record is billed at the contracted price', records.filter((r) => r.bucket !== 'not_found').every((r) => r.cost_usd > 0))
 
 console.log(`\n${failures === 0 ? '✓ All checks passed' : `✗ ${failures} check(s) failed`}\n`)
 process.exit(failures === 0 ? 0 : 1)

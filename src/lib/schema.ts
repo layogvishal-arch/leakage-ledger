@@ -1,7 +1,6 @@
 export type Enrichment = 'enriched' | 'not_found'
 export type Validity = 'unvalidated' | 'valid' | 'invalid' | 'bounced' | 'unknown'
 export type PersonMatch = 'presumed_right' | 'right_person' | 'wrong_person'
-export type ClaimConfidence = 'high' | 'medium' | null
 export type ClaimStatus = 'none' | 'submitted' | 'acknowledged' | 'credited' | 'rejected'
 
 export interface EnrichmentRecord {
@@ -21,7 +20,6 @@ export interface EnrichmentRecord {
   validated_at: string | null
   reply_analyzed_at: string | null
   claim_eligible: boolean
-  claim_confidence: ClaimConfidence
   claim_status: ClaimStatus
   // bucket label used only for generation bookkeeping / demo narrative
   bucket: BucketKey

@@ -14,14 +14,21 @@ const VENDOR_IDS = ENRICHMENT_VENDORS.map((v) => v.id)
 // dataset — everything else (every dollar figure, every chart) is derived
 // from the records these buckets produce. Change a count here and every
 // screen updates together.
+//
+// not_found records are never billed (see cost_usd below) — vendors don't
+// charge for a credit that returns no email or phone data — so they're kept
+// a minority bucket rather than the dominant one; the other bucket sizes are
+// tuned so effective cost per verified contact lands at exactly 2x the $0.10
+// contracted price (a clean "Meridian is paying double" story) once that
+// billing fix is applied.
 const BUCKETS: Record<BucketKey, number> = {
-  not_found: 15_000,
+  not_found: 4_800,
   invalid: 12_000,
   bounced: 8_000,
   wrong_person: 9_000,
   right_person: 18_000,
   presumed_right: 32_000,
-  unvalidated_residual: 6_000,
+  unvalidated_residual: 16_200,
 }
 
 // Vendor mix per bucket [apollo, wiza, contactout] — this is what makes bad
@@ -126,7 +133,6 @@ export function generateSeedData(seed: string = SEED): EnrichmentRecord[] {
       const person_match = BUCKET_TO_PERSON_MATCH[bucket]
 
       const claim_eligible = bucket === 'invalid' || bucket === 'bounced' || bucket === 'wrong_person'
-      const claim_confidence = bucket === 'wrong_person' ? 'medium' : claim_eligible ? 'high' : null
 
       let claim_status: EnrichmentRecord['claim_status'] = 'none'
       if (claim_eligible) {
@@ -147,7 +153,9 @@ export function generateSeedData(seed: string = SEED): EnrichmentRecord[] {
         waterfall_step,
         attempted_vendors,
         credits: 1,
-        cost_usd: enrichmentVendor.contractedPrice,
+        // Vendors don't charge for a credit that returns no email or phone
+        // data — only a resolved (enriched) record is billed.
+        cost_usd: bucket === 'not_found' ? 0 : enrichmentVendor.contractedPrice,
         enrichment: enrichmentResult,
         validity,
         validated: false, // filled in below via the metering pass
@@ -157,7 +165,6 @@ export function generateSeedData(seed: string = SEED): EnrichmentRecord[] {
         validated_at: null, // filled in below
         reply_analyzed_at: null, // filled in below for records where hasReply
         claim_eligible,
-        claim_confidence,
         claim_status,
         bucket,
       })
