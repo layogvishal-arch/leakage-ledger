@@ -2,7 +2,7 @@
 
 A case study prototype: how an internal RevOps team would track dud contact data across enrichment vendors, recover the money, and see true unit economics — instead of trusting the number on the invoice.
 
-**Live demo:** _(added after deploy)_
+**Live demo:** https://leakage-ledger.vercel.app
 **Case study write-up:** [docs/CASE_STUDY.md](docs/CASE_STUDY.md)
 
 > Synthetic demo data. Meridian, Apollo, Wiza, ContactOut, and ZeroBounce are fictional / used as neutral stand-ins for real enrichment and validation vendors.
