@@ -34,13 +34,7 @@ function FunnelViz({ stages }: { stages: ReturnType<typeof funnel> }) {
             <div className="mb-1 flex items-baseline justify-between text-sm">
               <span className="text-[var(--color-text)]">{s.label}</span>
               <span className="font-serif-num text-[var(--color-text-muted)]">
-                {i === 0 ? (
-                  <>{fmtNumber(s.count)} attempted — not credits yet, only a match consumes one</>
-                ) : (
-                  <>
-                    {fmtNumber(s.count)} · {fmtUsd(s.dollars)}
-                  </>
-                )}
+                {fmtNumber(s.count)} · {fmtUsd(s.dollars)}
               </span>
             </div>
             <div className="h-8 w-full overflow-hidden rounded-md bg-[var(--color-surface-2)]">
@@ -54,15 +48,7 @@ function FunnelViz({ stages }: { stages: ReturnType<typeof funnel> }) {
             </div>
             {i > 0 && dropFromPrev > 0 && (
               <div className="mt-1 text-xs text-[var(--color-leaked)]">
-                {stages[i - 1].dollars - s.dollars > 0 ? (
-                  <>
-                    −{fmtNumber(dropFromPrev)} dropped here — {fmtUsd(stages[i - 1].dollars - s.dollars)} spent for nothing
-                  </>
-                ) : (
-                  <span className="text-[var(--color-text-faint)]">
-                    {fmtNumber(dropFromPrev)} came back with no contact info — no credit consumed, no leakage
-                  </span>
-                )}
+                −{fmtNumber(dropFromPrev)} dropped here — {fmtUsd(stages[i - 1].dollars - s.dollars)} spent for nothing
               </div>
             )}
           </div>
@@ -109,9 +95,11 @@ function BreakdownTable({ rows }: { rows: ReturnType<typeof byVendor> }) {
   )
 }
 
+const DEFAULT_FILTERS: Filters = { from: '2026-03-01', to: '2026-09-30' }
+
 export function CommandCenter() {
   const { records, version } = useData()
-  const [filters, setFilters] = useState<Filters>({})
+  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
 
   const filtered = useMemo(() => applyFilters(records, filters), [records, filters, version])
   const h = useMemo(() => headline(filtered), [filtered])
@@ -166,7 +154,7 @@ export function CommandCenter() {
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[1.1fr_1fr]">
-        <Panel title="Funnel — searches attempted to verified contact">
+        <Panel title="Funnel — credits consumed to verified contact">
           <FunnelViz stages={stages} />
         </Panel>
         <Panel title="Trend over time">

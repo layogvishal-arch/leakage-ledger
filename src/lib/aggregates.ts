@@ -49,15 +49,18 @@ export interface FunnelStage {
   dollars: number
 }
 
+// A credit-to-cost funnel: every stage is a population that actually
+// consumed a credit (not_found searches never do, so they're not part of
+// this funnel at all — see isVerifiedGood / the not_found billing rule).
+// Dollars appear from the first stage onward since a credit, by definition,
+// is a billed unit.
 export function funnel(records: EnrichmentRecord[]): FunnelStage[] {
-  const purchased = records
-  const enriched = records.filter((r) => r.enrichment === 'enriched')
+  const consumed = records.filter((r) => r.credits > 0)
   const valid = records.filter((r) => r.validity === 'valid')
   const rightPerson = goodRecords(records)
   const dollarsFor = (set: EnrichmentRecord[]) => sumCost(set)
   return [
-    { key: 'purchased', label: 'Searches attempted', count: purchased.length, dollars: dollarsFor(purchased) },
-    { key: 'enriched', label: 'Enriched', count: enriched.length, dollars: dollarsFor(enriched) },
+    { key: 'consumed', label: 'Credits consumed', count: consumed.length, dollars: dollarsFor(consumed) },
     { key: 'valid', label: 'Valid contact', count: valid.length, dollars: dollarsFor(valid) },
     { key: 'right_person', label: 'Verified right person', count: rightPerson.length, dollars: dollarsFor(rightPerson) },
   ]

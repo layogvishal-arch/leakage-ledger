@@ -44,11 +44,13 @@ assertClose('sum(dept totalSpend) == headline totalSpend', depts.reduce((s, d) =
 assertClose('sum(dept leaked) == headline leaked', depts.reduce((s, d) => s + d.leaked, 0), h.leaked)
 assertClose('sum(dept recoverable) == headline recoverable', depts.reduce((s, d) => s + d.recoverable, 0), h.recoverable)
 
-// --- Funnel ---
-assertTrue('funnel purchased count == total records', f[0].count === TOTAL_RECORDS)
-assertClose('funnel purchased $ == headline totalSpend', f[0].dollars, h.totalSpend)
+// --- Funnel: a credit-to-cost funnel, so it starts at credits consumed
+// (not_found searches never consumed one, so they're excluded entirely) ---
+assertTrue('funnel first stage count == billed (non-not_found) records', f[0].count === records.filter((r) => r.bucket !== 'not_found').length)
+assertClose('funnel first stage $ == headline totalSpend', f[0].dollars, h.totalSpend)
 assertTrue('funnel is monotonically non-increasing (count)', f.every((stage, i) => i === 0 || stage.count <= f[i - 1].count))
-assertTrue('funnel right_person count == headline verifiedCount', f[3].count === h.verifiedCount)
+assertTrue('funnel is monotonically non-increasing ($)', f.every((stage, i) => i === 0 || stage.dollars <= f[i - 1].dollars))
+assertTrue('funnel last stage count == headline verifiedCount', f[f.length - 1].count === h.verifiedCount)
 
 // --- Headline reconciles internally ---
 assertClose('leaked + (totalSpend - leaked) == totalSpend', h.leaked + (h.totalSpend - h.leaked), h.totalSpend)
