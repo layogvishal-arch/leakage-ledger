@@ -60,7 +60,7 @@ function FunnelViz({ stages }: { stages: ReturnType<typeof funnel> }) {
                   </>
                 ) : (
                   <span className="text-[var(--color-text-faint)]">
-                    −{fmtNumber(dropFromPrev)} dropped here — not billed (no email or phone data returned)
+                    {fmtNumber(dropFromPrev)} came back with no contact info — never billed, no leakage
                   </span>
                 )}
               </div>
