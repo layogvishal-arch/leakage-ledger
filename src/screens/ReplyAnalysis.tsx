@@ -37,12 +37,12 @@ const SCENARIOS: Scenario[] = [
   {
     id: 'ambiguous',
     label: 'Ambiguous',
-    from: 'R. Kim',
-    reply: '"Thanks for reaching out, I\'ll take a look and get back to you when I can."',
+    from: 'Auto-reply (R. Kim)',
+    reply: '"I am currently out of the office with limited access to email and will respond to your message when I return on Monday."',
     verdict: {
       personMatch: 'ambiguous',
       rule: "Doesn't address identity either way",
-      reason: 'A real reply, not a bounce or denial — but it never says "yes, this is me" or "wrong person." Engaging with the message isn\'t the same as confirming identity, so it stays presumed right rather than getting upgraded on a guess.',
+      reason: "System-generated out-of-office notice — not a decision by the person at all, so it carries no identity signal either way. A reply that sounds like a deliberate human answer but never confirms or denies identity would land here too; this one just makes the \"no signal\" case unambiguous.",
     },
   },
 ]
