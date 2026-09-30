@@ -37,12 +37,12 @@ const SCENARIOS: Scenario[] = [
   {
     id: 'ambiguous',
     label: 'Ambiguous',
-    from: 'Auto-reply',
+    from: 'R. Kim',
     reply: '"Thanks for reaching out, I\'ll take a look and get back to you when I can."',
     verdict: {
       personMatch: 'ambiguous',
       rule: "Doesn't address identity either way",
-      reason: 'Reply neither confirms nor denies who they are — stays presumed right, flagged for a human to look at.',
+      reason: 'A real reply, not a bounce or denial — but it never says "yes, this is me" or "wrong person." Engaging with the message isn\'t the same as confirming identity, so it stays presumed right rather than getting upgraded on a guess.',
     },
   },
 ]
