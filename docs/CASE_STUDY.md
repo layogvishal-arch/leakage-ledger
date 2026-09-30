@@ -1,0 +1,39 @@
+# Leakage Ledger — case study
+
+*A prototype built to make a specific argument to a specific audience in under 60 seconds, and to show the reasoning behind it.*
+
+## The problem
+
+Any team buying contact-enrichment credits (Apollo, Wiza, ContactOut, and similar vendors) tracks spend against a **contracted price per credit**. Almost nobody tracks spend against the number that actually matters: the **cost of a credit that turns into a valid, reachable, correctly-identified person.**
+
+Those two numbers get treated as interchangeable. They aren't. A credit can be charged and still fail in three independent ways — the vendor found nobody, the email doesn't work, or the email works but reaches the wrong person. Only the *last* of these is usually caught, if it's caught at all (someone has to reply and say "wrong person" before anyone knows). The first two are invisible unless someone is deliberately looking, and even when a team suspects the gap exists, most vendor contracts have a claim window — so the money doesn't just leak, it *expires*.
+
+## Who this is for
+
+CFOs and RevOps/Partnerships leaders who own the vendor spend line, and engineers who'd need to actually instrument this. The prototype is built to be legible to both in one sitting: financial framing on top (dollars, funnels, trend), enough of the underlying data model exposed that an engineer can see it's not hand-waved (Screen 3, Screen 4, the verify script).
+
+## The core product decision: three signals, one final state
+
+The hardest part of this problem isn't the math — it's resisting the urge to let any one signal declare victory or defeat early. A record can be `enriched`, `valid`, and still not be usable if the LLM reply analysis later determines it's the wrong person. A record can look bad on validity and still turn out fine. The model here treats `enrichment`, `validity`, and `person_match` as three independent dimensions that resolve over time, and only the **final combination** counts toward loss — explicitly to prevent double-counting the same dollar as "leaked" under two different signals.
+
+The second decision that shapes the whole prototype: **`presumed_right` is not `right_person`.** It would have been easy to default new records to "right person" and only flip them on a bad reply — the funnel numbers would look better, and most systems in the wild do exactly this by omission. Instead the initial state is honestly unresolved, the UI labels it as presumed rather than confirmed, and Screen 4 makes the distinction visible and actionable (a reply is required to convert "presumed" into "confirmed") rather than assuming the best case silently. It costs the demo a slightly less dramatic headline number in exchange for a number that would survive a CFO asking "how do you know this is really a right-person contact?"
+
+## Why a synthetic 100k-record dataset instead of hand-typed numbers per screen
+
+The fastest way to build a demo like this is to hardcode the headline numbers on each screen and make sure they don't visibly contradict each other. The problem is that's exactly the failure mode this product is trying to argue against — numbers that look consistent because nobody checked, not because they reconcile. So the prototype inverts the build order: generate one record-level dataset first ([`src/lib/seedData.ts`](../src/lib/seedData.ts)), then derive *every* number on *every* screen from it at read time ([`src/lib/aggregates.ts`](../src/lib/aggregates.ts)). The `npm run verify` script exists to make that claim checkable rather than asserted — it fails the build if vendor totals don't sum to the headline, if the funnel isn't monotonic, or if a not-found record is ever marked claimable.
+
+This is also why "Write back to record" on the LLM Reply Analysis screen mutates a real record in the shared dataset rather than animating a canned number: the Command Center totals move because the underlying record actually changed, not because two screens were scripted to agree.
+
+## What's deliberately simplified for a prototype
+
+- **No backend, no real vendor APIs.** Vendor onboarding is a UI flow with no integration behind it — the point being demonstrated is that onboarding *should* be a repeatable, structured step, not that this build talks to Apollo's actual API.
+- **Claim status is randomly distributed, not simulated end-to-end.** A real system would track claims through an actual email/ticket lifecycle; here the tracker (submitted / acknowledged / credited / rejected) is seeded once so Screen 8 has something real to filter and total.
+- **LLM verdicts are pre-scripted, not live.** The three reply scenarios on Screen 4 are fixed examples with a fixed structured output; a production version would call a model and would need to handle ambiguous/low-confidence verdicts as a queue, not a dead end (which is why the "ambiguous" scenario here explicitly routes to "flag for human review" rather than guessing).
+- **One flat contracted price per enrichment vendor.** Real contracts have volume tiers, minimums, and sometimes bundled validation. Flattening this made the reconciliation math auditable at a glance; a real build would need per-contract pricing rules.
+
+## What I'd build next
+
+1. **A live claims workflow**, not just an export — turning Screen 8's evidence table into something that actually files against a vendor (or generates the ticket/email through a real integration) and tracks the SLA clock against real submission timestamps, not a static countdown from `created_at`.
+2. **Per-contract pricing and volume tiers**, so "contracted vs. effective" holds up against real vendor agreements instead of a flat $0.10.
+3. **A confidence-weighted view of `presumed_right`** — right now every presumed-right record counts equally toward "verified," but a record that's been presumed-right for 90 days with no reply is a different risk than one that's 2 days old. That's a natural next signal to add to the status model rather than a new screen.
+4. **Department chargeback**, made real rather than a toggle — Screen 6's "what to charge internal departments" column is currently illustrative; actually running departments' budgets against effective cost per contact would surface the same leakage argument at the P&L level, which is where it would actually change behavior.
