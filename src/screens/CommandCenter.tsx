@@ -48,7 +48,15 @@ function FunnelViz({ stages }: { stages: ReturnType<typeof funnel> }) {
             </div>
             {i > 0 && dropFromPrev > 0 && (
               <div className="mt-1 text-xs text-[var(--color-leaked)]">
-                −{fmtNumber(dropFromPrev)} dropped here ({fmtUsd(stages[i - 1].dollars - s.dollars)})
+                {stages[i - 1].dollars - s.dollars > 0 ? (
+                  <>
+                    −{fmtNumber(dropFromPrev)} dropped here — {fmtUsd(stages[i - 1].dollars - s.dollars)} spent for nothing
+                  </>
+                ) : (
+                  <span className="text-[var(--color-text-faint)]">
+                    −{fmtNumber(dropFromPrev)} dropped here — not billed (no email or phone data returned)
+                  </span>
+                )}
               </div>
             )}
           </div>
