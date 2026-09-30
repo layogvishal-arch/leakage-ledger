@@ -30,9 +30,13 @@ const SCENARIOS: Scenario[] = [
   {
     id: 'wrong',
     label: 'Wrong person',
-    from: 'Unknown recipient',
-    reply: '"I think you have the wrong person, I left that company last year."',
-    verdict: { personMatch: 'wrong_person', rule: 'Explicitly denies identity', reason: 'Reply states directly that this is the wrong person, with a reason given.' },
+    from: 'M. Torres',
+    reply: '"Wrong person — whoever you\'re after left the company last year. This inbox got reassigned to me after that, so I\'m the one seeing it now."',
+    verdict: {
+      personMatch: 'wrong_person',
+      rule: 'Explicitly denies identity',
+      reason: "The reply is from the inbox's current owner, not the original target — the departed employee's address was reassigned rather than deactivated, which is exactly why the message was delivered at all.",
+    },
   },
   {
     id: 'ambiguous',
