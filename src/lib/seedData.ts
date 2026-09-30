@@ -152,9 +152,11 @@ export function generateSeedData(seed: string = SEED): EnrichmentRecord[] {
         department,
         waterfall_step,
         attempted_vendors,
-        credits: 1,
-        // Vendors don't charge for a credit that returns no email or phone
-        // data — only a resolved (enriched) record is billed.
+        // A "credit" is a billable unit — vendors don't deduct one for a
+        // search that returns no email or phone data, so not_found records
+        // consume 0 credits, not 1. credits and cost_usd always move
+        // together: a search is either a credit (billed) or it isn't.
+        credits: bucket === 'not_found' ? 0 : 1,
         cost_usd: bucket === 'not_found' ? 0 : enrichmentVendor.contractedPrice,
         enrichment: enrichmentResult,
         validity,

@@ -86,6 +86,11 @@ assertTrue(
   records.filter((r) => r.bucket === 'not_found').every((r) => r.cost_usd === 0 && r.validation_cost_usd === 0),
 )
 assertTrue('every non-not_found record is billed at the contracted price', records.filter((r) => r.bucket !== 'not_found').every((r) => r.cost_usd > 0))
+assertTrue(
+  'credits and cost_usd always move together (a search is either a credit or it isn\'t)',
+  records.every((r) => (r.credits === 0) === (r.cost_usd === 0)),
+)
+assertClose('sum(credits) == count of billed (non-not_found) records', records.reduce((s, r) => s + r.credits, 0), records.filter((r) => r.bucket !== 'not_found').length, 0)
 
 console.log(`\n${failures === 0 ? '✓ All checks passed' : `✗ ${failures} check(s) failed`}\n`)
 process.exit(failures === 0 ? 0 : 1)

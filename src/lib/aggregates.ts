@@ -56,7 +56,7 @@ export function funnel(records: EnrichmentRecord[]): FunnelStage[] {
   const rightPerson = goodRecords(records)
   const dollarsFor = (set: EnrichmentRecord[]) => sumCost(set)
   return [
-    { key: 'purchased', label: 'Credits attempted', count: purchased.length, dollars: dollarsFor(purchased) },
+    { key: 'purchased', label: 'Searches attempted', count: purchased.length, dollars: dollarsFor(purchased) },
     { key: 'enriched', label: 'Enriched', count: enriched.length, dollars: dollarsFor(enriched) },
     { key: 'valid', label: 'Valid contact', count: valid.length, dollars: dollarsFor(valid) },
     { key: 'right_person', label: 'Verified right person', count: rightPerson.length, dollars: dollarsFor(rightPerson) },

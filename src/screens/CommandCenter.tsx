@@ -35,7 +35,7 @@ function FunnelViz({ stages }: { stages: ReturnType<typeof funnel> }) {
               <span className="text-[var(--color-text)]">{s.label}</span>
               <span className="font-serif-num text-[var(--color-text-muted)]">
                 {i === 0 ? (
-                  <>{fmtNumber(s.count)} attempted — billed once resolved</>
+                  <>{fmtNumber(s.count)} attempted — not credits yet, only a match consumes one</>
                 ) : (
                   <>
                     {fmtNumber(s.count)} · {fmtUsd(s.dollars)}
@@ -60,7 +60,7 @@ function FunnelViz({ stages }: { stages: ReturnType<typeof funnel> }) {
                   </>
                 ) : (
                   <span className="text-[var(--color-text-faint)]">
-                    {fmtNumber(dropFromPrev)} came back with no contact info — never billed, no leakage
+                    {fmtNumber(dropFromPrev)} came back with no contact info — no credit consumed, no leakage
                   </span>
                 )}
               </div>
@@ -166,7 +166,7 @@ export function CommandCenter() {
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[1.1fr_1fr]">
-        <Panel title="Funnel — credits attempted to verified contact">
+        <Panel title="Funnel — searches attempted to verified contact">
           <FunnelViz stages={stages} />
         </Panel>
         <Panel title="Trend over time">

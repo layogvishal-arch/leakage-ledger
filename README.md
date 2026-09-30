@@ -39,13 +39,13 @@ Only the **final state** counts toward dollar loss — no double-counting across
 
 Reply verdicts (Screen 4) are a plain three-way classification, not a confidence score: a reply either explicitly confirms the person, explicitly denies it, or does neither — in which case it's `ambiguous` and nothing gets written back. The same "no fuzzy confidence layer" rule applies to claim evidence (Screen 8): a record is claimable because its final state is `invalid`, `bounced`, or `wrong_person` — that fact alone is the evidence, with no separate high/medium confidence label on top of it.
 
-`not_found` credits are never billed — a vendor that returns no email or phone data doesn't charge for the attempt, so those records carry `cost_usd: 0` and never enter the leaked/recoverable math.
+A `not_found` search never consumes a credit — a vendor that returns no email or phone data doesn't charge for the attempt, so those records carry `credits: 0` and `cost_usd: 0` and never enter the leaked/recoverable math. `credits` and `cost_usd` always move together: a search is either a credit (billed) or it isn't, there's no in-between state where one is charged and the other isn't.
 
 The dataset is generated deterministically (seeded PRNG) from a small set of target bucket sizes in [`src/lib/seedData.ts`](src/lib/seedData.ts) — that's the *only* place numbers are hand-picked. Every dollar figure on every screen — funnel drops, vendor/department breakdowns, trend lines, agent chat answers, CSV exports — is computed from the record array at read time in [`src/lib/aggregates.ts`](src/lib/aggregates.ts).
 
 Landed numbers (deterministic given the seed):
 
-- Total spend: **$10,000** (95,200 billed enrichment credits × $0.10 + 60,000 ZeroBounce validations × $0.008 — the other 4,800 credits are `not_found` and free)
+- Total spend: **$10,000** (95,200 credits billed at $0.10 + 60,000 ZeroBounce validations × $0.008 — the other 4,800 of the 100,000 searches never consumed a credit at all, since they're `not_found`)
 - Verified right-person contacts: **50,000** (~half of enrichments, as specified)
 - Effective cost per verified contact: **exactly $0.20** — 2x the $0.10 contracted price
 - Recoverable: **$2,900** (invalid / bounced / wrong-person records, at contract price)
