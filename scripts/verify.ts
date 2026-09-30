@@ -118,5 +118,21 @@ assertTrue(
 )
 assertClose('sum(credits) == count of billed (non-not_found) records', records.reduce((s, r) => s + r.credits, 0), records.filter((r) => r.bucket !== 'not_found').length, 0)
 
+// --- A record can't have a definitive validity without having actually been
+// validated: you can't know an email is invalid, bounced, or valid without
+// ZeroBounce having run. So "resolved" (invalid/bounced/valid) and
+// "validated" must be the exact same set of records — no record claims a
+// validity result it never paid to determine. ---
+const resolvedBuckets = new Set(['invalid', 'bounced', 'wrong_person', 'right_person', 'presumed_right'])
+assertTrue(
+  'every resolved (invalid/bounced/valid) record is actually validated',
+  records.filter((r) => resolvedBuckets.has(r.bucket)).every((r) => r.validated && r.validated_at !== null && r.validation_cost_usd > 0),
+)
+assertTrue(
+  'not_found and pending records are never validated',
+  records.filter((r) => r.bucket === 'not_found' || r.bucket === 'unvalidated_residual').every((r) => !r.validated && r.validated_at === null),
+)
+assertClose('validationSpend == validated-record count x $0.008', validationSpend(records), records.filter((r) => resolvedBuckets.has(r.bucket)).length * 0.008)
+
 console.log(`\n${failures === 0 ? '✓ All checks passed' : `✗ ${failures} check(s) failed`}\n`)
 process.exit(failures === 0 ? 0 : 1)

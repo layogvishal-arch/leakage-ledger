@@ -17,18 +17,21 @@ const VENDOR_IDS = ENRICHMENT_VENDORS.map((v) => v.id)
 //
 // not_found records are never billed (see cost_usd below) — vendors don't
 // charge for a credit that returns no email or phone data — so they're kept
-// a minority bucket rather than the dominant one; the other bucket sizes are
-// tuned so effective cost per verified contact lands at exactly 2x the $0.10
-// contracted price (a clean "Meridian is paying double" story) once that
-// billing fix is applied.
+// a minority bucket rather than the dominant one. invalid/bounced/wrong_person/
+// right_person/presumed_right are all "resolved" buckets — you can't know a
+// record is invalid, bounced, or valid without ZeroBounce having actually run,
+// so every one of those 79,000 records is validated (validation_cost_usd is
+// never a free parameter decoupled from validity). Bucket sizes are tuned so
+// effective cost per verified contact still lands at exactly 2x the $0.10
+// contracted price ($9,368 enrichment + $632 validation = $10,000 / 50,000).
 const BUCKETS: Record<BucketKey, number> = {
-  not_found: 4_800,
+  not_found: 6_320,
   invalid: 12_000,
   bounced: 8_000,
   wrong_person: 9_000,
   right_person: 18_000,
   presumed_right: 32_000,
-  unvalidated_residual: 16_200,
+  unvalidated_residual: 14_680,
 }
 
 // Vendor mix per bucket [apollo, wiza, contactout] — this is what makes bad
@@ -177,23 +180,18 @@ export function generateSeedData(seed: string = SEED): EnrichmentRecord[] {
 
   const hasReplySet = new Set(hasReplyIndices)
 
-  // ZeroBounce metering pass: exactly 60,000 of the "resolved" pool were a
-  // paid validation credit (~$0.008), matching the contract volume.
-  const VALIDATED_TARGET = 60_000
-  const shuffledResolved = rng.shuffle([...resolvedIndices])
-  const validatedSet = new Set(shuffledResolved.slice(0, VALIDATED_TARGET))
-
+  // ZeroBounce pass: every "resolved" record (definitive invalid, bounced,
+  // or valid) was, by definition, actually checked — there's no such thing
+  // as an unvalidated record with a known validity. So all of resolvedIndices
+  // gets a paid validation credit (~$0.008), not a subsample of it.
   for (const idx of resolvedIndices) {
     const r = records[idx]
     const created = new Date(`${r.created_at}T00:00:00Z`)
-    if (validatedSet.has(idx)) {
-      r.validated = true
-      r.validation_cost_usd = VALIDATION_VENDOR.contractedPrice
-      r.validated_at = iso(clampToNow(addDays(created, rng.int(1, 3))))
-    }
+    r.validated = true
+    r.validation_cost_usd = VALIDATION_VENDOR.contractedPrice
+    r.validated_at = iso(clampToNow(addDays(created, rng.int(1, 3))))
     if (hasReplySet.has(idx)) {
-      const base = r.validated_at ? new Date(`${r.validated_at}T00:00:00Z`) : created
-      r.reply_analyzed_at = iso(clampToNow(addDays(base, rng.int(1, 14))))
+      r.reply_analyzed_at = iso(clampToNow(addDays(new Date(`${r.validated_at}T00:00:00Z`), rng.int(1, 14))))
     }
   }
 

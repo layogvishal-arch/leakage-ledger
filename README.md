@@ -45,9 +45,11 @@ The dataset is generated deterministically (seeded PRNG) from a small set of tar
 
 The Command Center funnel's dollar figures are enrichment cost only (credits × $0.10) — ZeroBounce's per-check fee is a separate vendor line on a separate unit (checks, not credits), so it's reported on its own beneath the funnel rather than folded into any bar. A bar's count and dollars always divide out to exactly $0.10.
 
+A record can't have a definitive `validity` of `invalid`, `bounced`, or `valid` without ZeroBounce having actually run — so every one of those "resolved" records (79,000 of them) is validated, not a subsample of them. `not_found` and still-pending records are the only ones that are never validated.
+
 Landed numbers (deterministic given the seed):
 
-- Total spend: **$10,000** (95,200 credits billed at $0.10 + 60,000 ZeroBounce validations × $0.008 — the other 4,800 of the 100,000 searches never consumed a credit at all, since they're `not_found`)
+- Total spend: **$10,000** (93,680 credits billed at $0.10 + 79,000 ZeroBounce validations × $0.008 — the other 6,320 of the 100,000 searches never consumed a credit at all, since they're `not_found`)
 - Verified right-person contacts: **50,000** (~half of enrichments, as specified)
 - Effective cost per verified contact: **exactly $0.20** — 2x the $0.10 contracted price
 - Recoverable: **$2,900** (invalid / bounced / wrong-person records, at contract price)

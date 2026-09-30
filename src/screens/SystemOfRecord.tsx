@@ -22,12 +22,10 @@ const SCHEMA_FIELDS: Array<{ field: string; type: string; note?: string }> = [
   { field: 'claim_status', type: 'none | submitted | acknowledged | credited | rejected' },
 ]
 
-function statusBadge(r: EnrichmentRecord, atStage: 'created' | 'validated' | 'reply') {
+function statusBadge(r: EnrichmentRecord, atStage: 'created' | 'validated' | 'stopped' | 'reply') {
   if (atStage === 'created') return <Badge tone="muted">unvalidated · presumed_right</Badge>
-  if (atStage === 'validated') {
-    if (r.enrichment === 'not_found') return <Badge tone="leaked">not_found</Badge>
-    return <Badge tone={r.validity === 'valid' ? 'recoverable' : 'leaked'}>{r.validity} · presumed_right</Badge>
-  }
+  if (atStage === 'validated') return <Badge tone={r.validity === 'valid' ? 'recoverable' : 'leaked'}>{r.validity} · presumed_right</Badge>
+  if (atStage === 'stopped') return <Badge tone="leaked">{r.validity} — claim filed</Badge>
   return (
     <Badge tone={r.validity === 'valid' && r.person_match !== 'wrong_person' ? 'recoverable' : 'leaked'}>
       {r.validity} · {r.person_match}
@@ -139,25 +137,55 @@ export function SystemOfRecord() {
                     <div className="w-24 shrink-0 pt-0.5 text-xs text-[var(--color-text-faint)]">{fmtDate(selected.created_at)}</div>
                     <div className="flex-1">
                       <div className="text-sm font-medium text-[var(--color-text)]">Final — no match found</div>
-                      <div className="mt-1 text-xs text-[var(--color-text-muted)]">Credit charged, not claimable per vendor policy.</div>
+                      <div className="mt-1 text-xs text-[var(--color-text-muted)]">
+                        No email or phone data returned — never billed, so there's nothing to claim.
+                      </div>
                       <div className="mt-2">
                         <Badge tone="muted">not claimable</Badge>
                       </div>
                     </div>
                   </div>
+                ) : selected.validity === 'unvalidated' ? (
+                  <div className="flex gap-4">
+                    <div className="w-24 shrink-0 pt-0.5 text-xs text-[var(--color-text-faint)]">pending</div>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-[var(--color-text)]">Awaiting validation</div>
+                      <div className="mt-1 text-xs text-[var(--color-text-muted)]">
+                        Credit already billed; no ZeroBounce check has run yet, so outreach hasn't started either.
+                      </div>
+                      <div className="mt-2">{statusBadge(selected, 'validated')}</div>
+                    </div>
+                  </div>
+                ) : selected.validity === 'invalid' || selected.validity === 'bounced' ? (
+                  <>
+                    <div className="flex gap-4">
+                      <div className="w-24 shrink-0 pt-0.5 text-xs text-[var(--color-text-faint)]">{fmtDate(selected.validated_at!)}</div>
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-[var(--color-text)]">After ZeroBounce</div>
+                        <div className="mt-1 text-xs text-[var(--color-text-muted)]">Deliverability signal resolved.</div>
+                        <div className="mt-2">{statusBadge(selected, 'validated')}</div>
+                      </div>
+                    </div>
+                    <div className="flex gap-4">
+                      <div className="w-24 shrink-0 pt-0.5 text-xs text-[var(--color-text-faint)]">{fmtDate(selected.validated_at!)}</div>
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-[var(--color-text)]">Stopped — no outreach sent</div>
+                        <div className="mt-1 text-xs text-[var(--color-text-muted)]">
+                          {selected.validity === 'invalid' ? 'An' : 'A'} {selected.validity} email never reaches anyone, so the sequence stops
+                          here — there's no person to reply, right or wrong. The credit was already billed, so this record is filed as a claim
+                          against the vendor instead.
+                        </div>
+                        <div className="mt-2">{statusBadge(selected, 'stopped')}</div>
+                      </div>
+                    </div>
+                  </>
                 ) : (
                   <>
                     <div className="flex gap-4">
-                      <div className="w-24 shrink-0 pt-0.5 text-xs text-[var(--color-text-faint)]">
-                        {selected.validated_at ? fmtDate(selected.validated_at) : 'pending'}
-                      </div>
+                      <div className="w-24 shrink-0 pt-0.5 text-xs text-[var(--color-text-faint)]">{fmtDate(selected.validated_at!)}</div>
                       <div className="flex-1">
-                        <div className="text-sm font-medium text-[var(--color-text)]">
-                          {selected.validated_at ? 'After ZeroBounce' : 'Awaiting validation'}
-                        </div>
-                        <div className="mt-1 text-xs text-[var(--color-text-muted)]">
-                          {selected.validated_at ? 'Deliverability signal resolved.' : 'No paid validation run yet on this record.'}
-                        </div>
+                        <div className="text-sm font-medium text-[var(--color-text)]">After ZeroBounce</div>
+                        <div className="mt-1 text-xs text-[var(--color-text-muted)]">Deliverability signal resolved — outreach can proceed.</div>
                         <div className="mt-2">{statusBadge(selected, 'validated')}</div>
                       </div>
                     </div>
