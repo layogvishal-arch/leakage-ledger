@@ -30,7 +30,12 @@ export function FilterBar({ filters, onChange }: { filters: Filters; onChange: (
         type="date"
         className={selectClass}
         value={filters.from ?? ''}
-        onChange={(e) => onChange({ ...filters, from: e.target.value || undefined })}
+        onChange={(e) => {
+          const value = e.target.value || undefined
+          // Picking a "from" with no "to" set yet defaults to that single day,
+          // rather than silently becoming an open-ended "from X onward" range.
+          onChange(value && !filters.to ? { ...filters, from: value, to: value } : { ...filters, from: value })
+        }}
         aria-label="From date"
       />
       <span className="text-xs text-[var(--color-text-faint)]">to</span>
@@ -38,7 +43,10 @@ export function FilterBar({ filters, onChange }: { filters: Filters; onChange: (
         type="date"
         className={selectClass}
         value={filters.to ?? ''}
-        onChange={(e) => onChange({ ...filters, to: e.target.value || undefined })}
+        onChange={(e) => {
+          const value = e.target.value || undefined
+          onChange(value && !filters.from ? { ...filters, to: value, from: value } : { ...filters, to: value })
+        }}
         aria-label="To date"
       />
       {(filters.vendor || filters.department || filters.from || filters.to) && (

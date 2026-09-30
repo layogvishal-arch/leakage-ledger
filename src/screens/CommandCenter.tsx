@@ -34,7 +34,13 @@ function FunnelViz({ stages }: { stages: ReturnType<typeof funnel> }) {
             <div className="mb-1 flex items-baseline justify-between text-sm">
               <span className="text-[var(--color-text)]">{s.label}</span>
               <span className="font-serif-num text-[var(--color-text-muted)]">
-                {fmtNumber(s.count)} · {fmtUsd(s.dollars)}
+                {i === 0 ? (
+                  <>{fmtNumber(s.count)} attempted — billed once resolved</>
+                ) : (
+                  <>
+                    {fmtNumber(s.count)} · {fmtUsd(s.dollars)}
+                  </>
+                )}
               </span>
             </div>
             <div className="h-8 w-full overflow-hidden rounded-md bg-[var(--color-surface-2)]">
@@ -160,7 +166,7 @@ export function CommandCenter() {
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[1.1fr_1fr]">
-        <Panel title="Funnel — credits purchased to verified contact">
+        <Panel title="Funnel — credits attempted to verified contact">
           <FunnelViz stages={stages} />
         </Panel>
         <Panel title="Trend over time">
